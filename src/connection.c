@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h> /* getaddrinfo */
 #include <unistd.h> /* close */
 #include <fcntl.h>
@@ -691,9 +692,17 @@ initiate_server_connect(struct Connection *con, struct ev_loop *loop) {
         }
     }
 
-    int result = connect(sockfd,
+    size_t result = -1;
+#ifdef MSG_FASTOPEN
+    result = buffer_sendto(con->client.buffer, sockfd,
+            MSG_FASTOPEN, (struct sockaddr *)&con->server.addr,
+            con->server.addr_len, loop);
+#else
+    result = connect(sockfd,
             (struct sockaddr *)&con->server.addr,
             con->server.addr_len);
+#endif
+
     /* TODO retry connect in EADDRNOTAVAIL case */
     if (result < 0 && errno != EINPROGRESS) {
         close(sockfd);
