@@ -16,6 +16,7 @@ Features
 + Supports multiple listening sockets per instance.
 + Supports HAProxy proxy protocol to propagate original source address to
   backend servers.
++ (Experimental) Supports TCP Fast Open client and server - Not working
 
 Usage
 -----
