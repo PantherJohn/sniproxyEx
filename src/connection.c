@@ -693,7 +693,7 @@ initiate_server_connect(struct Connection *con, struct ev_loop *loop) {
     }
 
     size_t result = -1;
-#ifdef MSG_FASTOPEN
+#if (defined MSG_FASTOPEN) && !(defined TCP_FASTOPEN_CONNECT)
     result = buffer_sendto(con->client.buffer, sockfd,
             MSG_FASTOPEN, (struct sockaddr *)&con->server.addr,
             con->server.addr_len, loop);
