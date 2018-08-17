@@ -267,12 +267,12 @@ connection_cb(struct ev_loop *loop, struct ev_io *w, int revents) {
     if (revents & EV_WRITE && buffer_len(output_buffer)) {
         ssize_t bytes_transmitted = -1;
 #if (defined MSG_FASTOPEN) && !(defined TCP_FASTOPEN_CONNECT)
-        if (is_client && (struct sockaddr *)&con->server.addr != NULL) {
+        if (is_client && &con->server.addr != NULL) {
             bytes_transmitted = 
                 buffer_sendto(output_buffer, w->fd,
                               MSG_FASTOPEN, (struct sockaddr *)&con->server.addr,
                               con->server.addr_len, loop);
-            (struct sockaddr *)&con->server.addr = NULL;
+            &con->server.addr = NULL;
         } else {
             bytes_transmitted = buffer_send(output_buffer, w->fd, 0, loop);
         }
