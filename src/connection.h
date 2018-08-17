@@ -58,6 +58,7 @@ struct Connection {
     struct ResolvQuery *query_handle;
     ev_tstamp established_timestamp;
     int use_proxy_header;
+    int fast_open;
 
     TAILQ_ENTRY(Connection) entries;
 };

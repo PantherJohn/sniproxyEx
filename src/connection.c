@@ -267,12 +267,12 @@ connection_cb(struct ev_loop *loop, struct ev_io *w, int revents) {
     if (revents & EV_WRITE && buffer_len(output_buffer)) {
         ssize_t bytes_transmitted = -1;
 #if (defined MSG_FASTOPEN) && !(defined TCP_FASTOPEN_CONNECT)
-        if (is_client && &con->server.addr != NULL) {
+        if (is_client && con->fast_open) {
             bytes_transmitted = 
                 buffer_sendto(output_buffer, w->fd,
                               MSG_FASTOPEN, (struct sockaddr *)&con->server.addr,
                               con->server.addr_len, loop);
-            &con->server.addr = NULL;
+            con->fast_open = -1;
         } else {
             bytes_transmitted = buffer_send(output_buffer, w->fd, 0, loop);
         }
@@ -711,6 +711,7 @@ initiate_server_connect(struct Connection *con, struct ev_loop *loop) {
             con->server.addr_len);
 #endif
 
+    con->fast_open = 0;
     /* TODO retry connect in EADDRNOTAVAIL case */
     if (result < 0 && errno != EINPROGRESS) {
         close(sockfd);
