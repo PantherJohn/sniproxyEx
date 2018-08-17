@@ -265,7 +265,20 @@ connection_cb(struct ev_loop *loop, struct ev_io *w, int revents) {
 
     /* Transmit */
     if (revents & EV_WRITE && buffer_len(output_buffer)) {
-        ssize_t bytes_transmitted = buffer_send(output_buffer, w->fd, 0, loop);
+        ssize_t bytes_transmitted = -1;
+#if (defined MSG_FASTOPEN) && !(defined TCP_FASTOPEN_CONNECT)
+        if (is_client && con->server.addr != NULL) {
+            bytes_transmitted = buffer_sendto(output_buffer, w->fd,
+            MSG_FASTOPEN, (struct sockaddr *)&con->server.addr,
+            con->server.addr_len, loop);
+            con->server.addr = NULL;
+        } else {
+            bytes_transmitted = buffer_send(output_buffer, w->fd, 0, loop);
+        }
+#else
+        bytes_transmitted = buffer_send(output_buffer, w->fd, 0, loop);
+#endif
+
         if (bytes_transmitted < 0 && !IS_TEMPORARY_SOCKERR(errno)) {
             warn("send(%s): %s, closing connection",
                     socket_name,
@@ -691,11 +704,7 @@ initiate_server_connect(struct Connection *con, struct ev_loop *loop) {
     }
 
     size_t result = -1;
-#if (defined MSG_FASTOPEN) && !(defined TCP_FASTOPEN_CONNECT)
-    result = buffer_sendto(con->client.buffer, sockfd,
-            MSG_FASTOPEN, (struct sockaddr *)&con->server.addr,
-            con->server.addr_len, loop);
-#else
+#if !(defined MSG_FASTOPEN)
     result = connect(sockfd,
             (struct sockaddr *)&con->server.addr,
             con->server.addr_len);
