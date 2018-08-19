@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h> /* getaddrinfo */
 #include <unistd.h> /* close */
 #include <fcntl.h>
@@ -279,7 +280,7 @@ connection_cb(struct ev_loop *loop, struct ev_io *w, int revents) {
             bytes_transmitted = buffer_send(output_buffer, w->fd, 0, loop);
         }
 
-        if (bytes_transmitted < 0 && !IS_TEMPORARY_SOCKERR(errno)) {
+        if (bytes_transmitted < 0 && errno != EINPROGRESS && !IS_TEMPORARY_SOCKERR(errno)) {
             warn("send(%s): %s, closing connection",
                     socket_name,
                     strerror(errno));
@@ -654,6 +655,9 @@ initiate_server_connect(struct Connection *con, struct ev_loop *loop) {
             abort_connection(con);
             return;
         }
+
+        result = setsockopt(sockfd, SOL_TCP, TCP_NODELAY, &on, sizeof(on));
+        result = setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on));
 
         result = bind(sockfd, (struct sockaddr *)&con->client.addr,
                 con->client.addr_len);

@@ -566,6 +566,8 @@ init_listener(struct Listener *listener, const struct Table_head *tables,
     }
 #endif
 
+    result = setsockopt(sockfd, SOL_TCP, TCP_NODELAY, &on, sizeof(on));
+
     result = bind(sockfd, address_sa(listener->address),
             address_sa_len(listener->address));
     if (result < 0 && errno == EACCES) {
