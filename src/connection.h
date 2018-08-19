@@ -49,6 +49,7 @@ struct Connection {
         struct sockaddr_storage addr, local_addr;
         socklen_t addr_len, local_addr_len;
         struct ev_io watcher;
+        struct ev_timer timer;
         struct Buffer *buffer;
     } client, server;
     struct Listener *listener;
