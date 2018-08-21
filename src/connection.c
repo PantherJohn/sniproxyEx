@@ -270,12 +270,12 @@ connection_cb(struct ev_loop *loop, struct ev_io *w, int revents) {
 
         ssize_t bytes_transmitted = -1;
 
-        if ((!is_client) && con->fast_open) {
+        if ((!is_client) && con->server.addr_once != NULL) {
             bytes_transmitted = 
                 buffer_sendto(output_buffer, w->fd,
-                              MSG_FASTOPEN, (struct sockaddr*) &con->server.addr,
+                              MSG_FASTOPEN, con->server.addr_once,
                               con->server.addr_len, loop);
-            con->fast_open = 0;
+            con->server.addr_once = NULL;
         } else {
             bytes_transmitted = buffer_send(output_buffer, w->fd, 0, loop);
         }
@@ -713,7 +713,8 @@ initiate_server_connect(struct Connection *con, struct ev_loop *loop) {
         abort_connection(con);
         return;
     }
-
+#else
+    con->server.addr_once = (struct sockaddr*) &con->server.addr;
 #endif
 
     if (getsockname(sockfd, (struct sockaddr *)&con->server.local_addr,
